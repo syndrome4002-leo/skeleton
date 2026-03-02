@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title></title>
+		<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="X-UA-Compatible" content="ie=edge" />
+
+<link rel="stylesheet" crossorigin="anonymous"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css"
+    integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" />
+
+<link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css" />	
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" />
+
+		<link rel="stylesheet" href="navbar.css" />
+		
+			<link rel="stylesheet" href="navbar-authenticated.css" />
+		
+		<link rel="stylesheet" href="articleheader.css" />
+
+	</head>
+
+	<body>
+				
+		<section class="page-header bg-white">
+    <div class="container">
+        <div class="row search__header">
+            <div class="search-shell">
+                <div class="search-container d-flex align-items-center">
+                    <div class="search-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <input type="text" class="search-input" placeholder="Search articles, topics, or keywords..."
+                        aria-label="Search" autocomplete="off">
+                </div>
+                <div id="skeleton-loader" class="skeleton-loader d-none">
+                    <div class="skeleton-item"></div>
+                    <div class="skeleton-item"></div>
+                    <div class="skeleton-item"></div>
+                </div>
+                <ul id="search-suggestions" class="suggestion-list list-unstyled d-none mb-0"></ul>
+            </div>
+        </div>
+
+        <div class="nav-bar position-absolute mb-0 px-4">
+            <ul class="gap-4 align-items-center d-flex align-items-center list-unstyled text-light mb-0">
+                <li class="nav-item mt-2">
+                    <a class="nav-link context-selecter px-3 active" href="/search/articles">All Articles</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>	
+
+
+
+		
+		
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
+<script 
+    src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js">
+</script>
+<script>
+    (function () {
+        const input = document.querySelector(".search-input");
+        const suggestionList = document.getElementById("search-suggestions");
+        const skeletonLoader = document.getElementById("skeleton-loader");
+
+        if (!input || !suggestionList || !skeletonLoader) return;
+
+        const suggestions = [
+            "article detail page design",
+            "article detail page UX best practices",
+            "how to improve article readability",
+            "SEO checklist for article pages",
+            "content strategy for blogs",
+            "how to write better article headlines",
+            "improving on-page engagement",
+            "internal linking for article pages",
+            "mobile friendly article layout",
+            "popular article sidebar ideas"
+        ];
+        const NO_RESULTS_TEXT = "No records found";
+
+        let activeIndex = -1;
+        let visibleSuggestions = [];
+
+        const searchRedirect = (query) => {
+            const value = query.trim();
+            if (!value) return;
+            window.location.href = "/search/articles?q=" + encodeURIComponent(value);
+        };
+
+        const renderSuggestions = (items) => {
+            suggestionList.innerHTML = "";
+            activeIndex = -1;
+            visibleSuggestions = items;
+
+            if (items.length === 0) {
+                const li = document.createElement("li");
+                li.className = "suggestion-item no-results";
+                li.textContent = NO_RESULTS_TEXT;
+                suggestionList.appendChild(li);
+                suggestionList.classList.remove("d-none");
+                return;
+            }
+
+            items.forEach((item) => {
+                const li = document.createElement("li");
+                li.className = "suggestion-item";
+                const icon = document.createElement("i");
+                icon.className = "fa-solid fa-magnifying-glass";
+                const text = document.createElement("span");
+                text.textContent = item;
+                li.appendChild(icon);
+                li.appendChild(text);
+
+                li.addEventListener("mousedown", (event) => {
+                    event.preventDefault();
+                    input.value = item;
+                    searchRedirect(item);
+                });
+
+                suggestionList.appendChild(li);
+            });
+
+            suggestionList.classList.toggle("d-none", items.length === 0);
+        };
+
+        const getFilteredSuggestions = (value) => {
+            const normalized = value.trim().toLowerCase();
+            if (!normalized) return suggestions.slice(0, 6);
+            return suggestions
+                .filter((item) => item.toLowerCase().includes(normalized))
+                .slice(0, 6);
+        };
+
+        const updateActiveSuggestion = (items) => {
+            const domItems = suggestionList.querySelectorAll(".suggestion-item");
+            domItems.forEach((node, index) => {
+                node.classList.toggle("active", index === activeIndex);
+            });
+            if (activeIndex >= 0 && items[activeIndex]) {
+                input.value = items[activeIndex];
+            }
+        };
+
+        input.addEventListener("input", () => {
+            const matches = getFilteredSuggestions(input.value);
+            renderSuggestions(matches);
+        });
+
+        input.addEventListener("focus", () => {
+            skeletonLoader.classList.remove("d-none");
+            suggestionList.classList.add("d-none");
+            
+            setTimeout(() => {
+                skeletonLoader.classList.add("d-none");
+                renderSuggestions(getFilteredSuggestions(input.value));
+            }, 2000);
+        });
+
+        input.addEventListener("keydown", (event) => {
+            const items = visibleSuggestions;
+
+            if (event.key === "ArrowDown") {
+                event.preventDefault();
+                if (!items.length) return;
+                activeIndex = (activeIndex + 1) % items.length;
+                updateActiveSuggestion(items);
+                return;
+            }
+
+            if (event.key === "ArrowUp") {
+                event.preventDefault();
+                if (!items.length) return;
+                activeIndex = (activeIndex - 1 + items.length) % items.length;
+                updateActiveSuggestion(items);
+                return;
+            }
+
+            if (event.key === "Enter") {
+                event.preventDefault();
+                if (activeIndex >= 0 && items[activeIndex]) {
+                    searchRedirect(items[activeIndex]);
+                    return;
+                }
+                searchRedirect(input.value);
+            }
+        });
+
+        document.addEventListener("click", (event) => {
+            if (event.target === input || suggestionList.contains(event.target)) return;
+            suggestionList.classList.add("d-none");
+        });
+    })();
+</script>
+		
+    </body>
+</html>
